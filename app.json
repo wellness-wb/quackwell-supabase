@@ -5,9 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "quackwell",
+    "platforms": ["ios", "android"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "SUPABASE_URL": "process.env.EXPO_PUBLIC_SUPABASE_URL",
+      "SUPABASE_ANON_KEY": "process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY"
+    },
     "ios": {
       "supportsTablet": true
     },
