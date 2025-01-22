@@ -1,7 +1,7 @@
+import { sendPasswordResetLink } from "@/src/auth";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Button, Text, TextInput, View } from "react-native";
-import { sendPasswordResetLink } from "../src/auth";
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function ForgotPasswordScreen() {
       await sendPasswordResetLink(email);
       alert("Password reset email sent! Please check your inbox.");
       // After sending the password reset link, navigate to the login screen or another appropriate page
-      router.replace("/");
+      router.replace("/auth/login");
     } catch (err) {
       console.error(err);
       alert(`Error: ${err}`);

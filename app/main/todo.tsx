@@ -1,6 +1,7 @@
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Button,
   FlatList,
@@ -9,8 +10,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { signOut } from "../src/auth";
-import { createTodo, deleteTodo, getTodos, updateTodo } from "../src/todos";
+
+import { useAuth } from "@/app/AuthContext";
+import { signOut } from "@/src/auth";
+import { createTodo, deleteTodo, getTodos, updateTodo } from "../../src/todo";
 
 interface Todo {
   id: string;
@@ -24,18 +27,45 @@ interface Todo {
 export default function TodoScreen() {
   const router = useRouter();
 
+  // Retrieved from useAuth():
+  //  - session: Information about the login session
+  //  - isLoading: True while initially loading session data from AsyncStorage
+  const { session, isLoading } = useAuth();
+
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
 
-  // States for edit mode
+  // Edit mode state
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editDueDate, setEditDueDate] = useState("");
 
-  // Fetch the Todo list
+  /**
+   * 1) Check for session existence
+   * - If the app has finished loading (isLoading is false) but there is no session, redirect to the login page (/auth/login)
+   */
+  useEffect(() => {
+    if (!isLoading && !session) {
+      router.replace("/auth/login");
+    }
+  }, [isLoading, session]);
+
+  /**
+   * 2) Fetch the Todo list if a session exists
+   * - Call fetchTodos() only when the session is valid
+   * - Fetch once initially, then re-fetch on button click or after creating a new Todo
+   */
+
+  useEffect(() => {
+    if (session) {
+      fetchTodos();
+    }
+  }, [session]);
+
+  // --- Fetching the Todo list ---
   const fetchTodos = async () => {
     try {
       const data = await getTodos();
@@ -46,23 +76,25 @@ export default function TodoScreen() {
     }
   };
 
-  useEffect(() => {}, []);
-
-  // Create a Todo
+  // --- Create To do ---
   const handleCreateTodo = async () => {
     try {
+      if (!title.trim()) {
+        alert("Title is a required field.");
+        return;
+      }
       await createTodo(title, description, dueDate);
       setTitle("");
       setDescription("");
       setDueDate("");
-      fetchTodos(); // Refresh the list after creation
+      fetchTodos(); // Reload the list after creation
     } catch (error) {
       console.error(error);
       alert(`Failed to create todo: ${error}`);
     }
   };
 
-  // Delete a Todo (actual call)
+  // --- Delete To do ---
   const handleDeleteTodo = async (id: string) => {
     try {
       await deleteTodo(id);
@@ -73,7 +105,7 @@ export default function TodoScreen() {
     }
   };
 
-  // === Function for "confirm" ===
+  // Confirmation Alert before deletion
   const handleDeleteConfirm = (id: string) => {
     Alert.alert(
       "Confirm Deletion",
@@ -89,9 +121,9 @@ export default function TodoScreen() {
     );
   };
 
-  // === Edit Todo ===
+  // --- Update To do ---
   const handleEditPress = (todo: Todo) => {
-    // When entering edit mode, save existing values to state
+    // When entering edit mode, save the existing values to the state
     setEditingTodo(todo);
     setEditTitle(todo.title);
     setEditDescription(todo.description);
@@ -107,7 +139,7 @@ export default function TodoScreen() {
         description: editDescription,
         due_date: editDueDate,
       });
-      // After updating, exit edit mode and refresh the list
+      // Exit edit mode and refresh the list after the update
       setEditingTodo(null);
       fetchTodos();
     } catch (error) {
@@ -116,7 +148,6 @@ export default function TodoScreen() {
     }
   };
 
-  // Cancel editing
   const handleCancelEdit = () => {
     setEditingTodo(null);
     setEditTitle("");
@@ -124,7 +155,7 @@ export default function TodoScreen() {
     setEditDueDate("");
   };
 
-  // Logout
+  // --- Logout ---
   const handleLogout = async () => {
     try {
       await signOut();
@@ -135,16 +166,25 @@ export default function TodoScreen() {
     }
   };
 
-  // Each Todo item to render
+  /**
+   * Function to render a single Todo item (for use with FlatList)
+   */
+
   const renderTodoItem = ({ item }: { item: Todo }) => (
-    <View style={{ padding: 8, borderBottomWidth: 1, marginBottom: 4 }}>
+    <View
+      style={{
+        padding: 8,
+        borderBottomWidth: 1,
+        borderColor: "#ccc",
+        marginBottom: 4,
+      }}
+    >
       <Text style={{ fontWeight: "bold" }}>{item.title}</Text>
       <Text>{item.description}</Text>
       <Text>Due: {item.due_date}</Text>
       <Text>Completed: {item.completed ? "Yes" : "No"}</Text>
 
       <View style={{ flexDirection: "row", marginTop: 4 }}>
-        {/* Edit Button */}
         <TouchableOpacity
           style={{ marginRight: 16 }}
           onPress={() => handleEditPress(item)}
@@ -152,7 +192,6 @@ export default function TodoScreen() {
           <Text style={{ color: "blue" }}>Edit</Text>
         </TouchableOpacity>
 
-        {/* Delete button: Calls double-confirm function */}
         <TouchableOpacity onPress={() => handleDeleteConfirm(item.id)}>
           <Text style={{ color: "red" }}>Delete</Text>
         </TouchableOpacity>
@@ -160,9 +199,12 @@ export default function TodoScreen() {
     </View>
   );
 
-  // === Edit Form ===
+  /**
+   * Edit Form visible only in edit mode
+   */
+
   const renderEditForm = () => {
-    if (!editingTodo) return null; // Do not display the form if there is no Todo being edited
+    if (!editingTodo) return null;
 
     return (
       <View style={{ marginTop: 20, padding: 16, borderWidth: 1 }}>
@@ -195,6 +237,26 @@ export default function TodoScreen() {
     );
   };
 
+  /**
+   * Screen rendering
+   */
+  // (1) Show a loading indicator while the global session is loading
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" />
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  // (2) If there is no session, the user is already being redirected to /auth/login by useEffect().
+  //     Temporarily return null here.
+  if (!session) {
+    return null;
+  }
+
+  // (3) If a session exists and loading is complete, render the main content
   return (
     <View style={{ flex: 1, padding: 16 }}>
       <Button title="Logout" onPress={handleLogout} />
@@ -202,12 +264,15 @@ export default function TodoScreen() {
       <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 16 }}>
         My Todos
       </Text>
+
+      {/* Todo List */}
       <FlatList
         data={todos}
         keyExtractor={(item) => item.id}
         renderItem={renderTodoItem}
       />
 
+      {/* Section for creating a new Todo */}
       <View style={{ marginTop: 16 }}>
         <Text style={{ fontSize: 18, marginBottom: 8 }}>Create New Todo</Text>
         <TextInput

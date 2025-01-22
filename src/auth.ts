@@ -52,8 +52,6 @@ export async function signOut() {
 
 // Function to send the password reset link
 export async function sendPasswordResetLink(email: string) {
-  // Call without the redirectTo option → Redirects to Supabase's default Reset UI
-  // Redirect Error : WIP 1.20.25
   const { data, error } = await supabase.auth.resetPasswordForEmail(email);
 
   if (error) {
