@@ -24,7 +24,6 @@ export default function ForgotPasswordScreen() {
     try {
       await sendPasswordResetLink(email);
       alert("Password reset email sent! Please check your inbox.");
-
       router.replace("/auth/login");
     } catch (err) {
       console.error(err);

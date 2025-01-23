@@ -52,7 +52,9 @@ export async function signOut() {
 
 // Function to send the password reset link
 export async function sendPasswordResetLink(email: string) {
-  const { data, error } = await supabase.auth.resetPasswordForEmail(email);
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: process.env.EXPO_PUBLIC_RESET_PASSWORD_URL + "reset-password",
+  });
 
   if (error) {
     console.error("Error sending password reset link:", error.message);
