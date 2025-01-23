@@ -13,10 +13,18 @@ export default function ForgotPasswordScreen() {
       return;
     }
 
+    const emailRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+
+    if (!emailRegex.test(email)) {
+      alert("Please enter a valid email address.");
+      return;
+    }
+
     try {
       await sendPasswordResetLink(email);
       alert("Password reset email sent! Please check your inbox.");
-      // After sending the password reset link, navigate to the login screen or another appropriate page
+
       router.replace("/auth/login");
     } catch (err) {
       console.error(err);

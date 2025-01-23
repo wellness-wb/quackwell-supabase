@@ -1,4 +1,4 @@
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -259,7 +259,21 @@ export default function TodoScreen() {
   // (3) If a session exists and loading is complete, render the main content
   return (
     <View style={{ flex: 1, padding: 16 }}>
-      <Button title="Logout" onPress={handleLogout} />
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <TouchableOpacity onPress={handleLogout} style={{ marginRight: 16 }}>
+          <Text style={{ color: "blue" }}>Logout</Text>
+        </TouchableOpacity>
+
+        <Link href="/auth/update-user">
+          <Text style={{ color: "blue" }}>Update User</Text>
+        </Link>
+      </View>
 
       <Text style={{ fontSize: 20, fontWeight: "bold", marginVertical: 16 }}>
         My Todos
