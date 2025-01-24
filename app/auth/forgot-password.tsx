@@ -1,5 +1,5 @@
 import { sendPasswordResetLink } from "@/src/auth";
-import { useRouter } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Button, Text, TextInput, View } from "react-native";
 
@@ -45,6 +45,10 @@ export default function ForgotPasswordScreen() {
       />
 
       <Button title="Send Reset Email" onPress={handleResetPassword} />
+
+      <Link href="/auth/login" style={{ marginTop: 16 }}>
+        <Text style={{ color: "blue" }}>Back to Login</Text>
+      </Link>
     </View>
   );
 }
